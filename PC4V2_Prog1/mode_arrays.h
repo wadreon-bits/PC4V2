@@ -1,75 +1,74 @@
 #ifndef mode_array_h
 #define mode_array_h
 
-
 #include <WString.h>
 
 /*
 Drive and LED Arrays are processed as follows- 
-	EACH ROW ELEMENT IS PROCESSED PER MODE_MANANGER EVENT = 10ms
-	Each 100 Row elements will provide 1second of events/values
-  100HZ processing. 
+	EACH ROW ELEMENT IS PROCESSED PER MODE_MANANGER EVENT = Every 10ms
+	So Each 100 array elements will provide 1second of motor waveform/pattern
+  100HZ processing. So up to a 100Hz 'Pattern' can be modulated   DIRB-100%     MOTOR OFF   DIRA-100%
+  Each array position holds a 10bit motor output pwm value.         -1023   ~~~~  0 ~~~~~    +1023.
+  Negative values turn the motor in the reverse direction. Do not reverse motor quickly!!
+  ex: const unsigned int DemoArray[] = {1023, 1023, 0, 0};  This array makes motor goto full power for 20ms, then Off for 20ms, repeat. 
+  Use Python script- ExceltoCArray.py to simplify generating large arrays. 
+  Or just hand build arrays below. 
+  no immediate limit to array lengths. Limited by Flash memory- Constants store in Flash. 
 
-  Use Python script- ExceltoCArray.py to simplify generated large arrays. 
-  Or just hand build arrays below. Make certain to include the proper array length []
-  no immediate limit to array lengths. Limited by RAM. 
-
-  NOTE- as of 11/27/24-  No modification have been made to include handling new 2nd motor channel-
-  Just using existing arrays below for both motorA and motorB. Could seperate and modify code to read from seperate arrays for each motor.
+  NOTE- as of 11/27/24-  In order to handle a second motor channel. Also have ability to have motorsA/B have different patterns,
+  I just added 2 arrays for each mode A/B arrays. They can be completely different values and length. 
+  driveA = Drive Channel A
+  driveB = Drive Channel B  
   
-  
+  **!! DO NOT RECOMMEND QUICKLY REVERSING A MOTORS ROTATION DIR!!! No FW/HW protection built in. 
+  Stop motor before reversal- exact timing specific to motor. 
 */
-//######################### MODE 1 ARRAY ############################################//
-volatile const unsigned int driveA_mode1_array[10]  = {320,0,320,0,320,0,320,0,320,0};
-volatile const unsigned int driveB_mode1_array[10]  = {320,0,320,0,320,0,320,0,320,0};
+//######################### MODE 1 ARRAY ############################################//     Single DC Output Value (0 to +/-1023) = (0-100% Power), negative changes motor dir
+const int driveA_mode1_array[]  = {510};    //Motor Channel A
+const int driveB_mode1_array[]  = {510};    //Motor Channel B
 
-//######################### MODE 2 ARRAY ############################################//
-volatile const unsigned int driveA_mode2_array[1]   = {500};
-volatile const unsigned int driveB_mode2_array[1]   = {500};
+//######################### MODE 2 ARRAY ############################################//     Single DC Output Value (-1023 <-> +1023) = (0-100% Power), negative changes motor dir
+const int driveA_mode2_array[]   = {770};
+const int driveB_mode2_array[]   = {770};
 
-//######################### MODE 3 ARRAY ############################################//
-volatile const unsigned int driveA_mode3_array[1]   = {500};
-volatile const unsigned int driveB_mode3_array[1]   = {500};
+//######################### MODE 3 ARRAY ############################################//     Single DC Output Value (-1023 <-> +1023) = (0-100% Power), negative changes motor dir
+const int driveA_mode3_array[]   = {1023};    //showing motors going opposite dir
+const int driveB_mode3_array[]   = {-1023};   //showing motos going opposite dir
 
-//######################### MODE 4 ARRAY ############################################//
-volatile const unsigned int driveA_mode4_array[1]   = {500};
-volatile const unsigned int driveB_mode4_array[1]   = {500};
+//######################### MODE 4 ARRAY ############################################//     10Hz Square Wave alternating ~50%/~100%
+const int driveA_mode4_array[]   = {500, 500, 500, 500, 500, 1000, 1000, 1000, 1000, 1000};  
+const int driveB_mode4_array[]   = {500, 500, 500, 500, 500, 1000, 1000, 1000, 1000, 1000};  
 
-//######################### MODE 5 ARRAY ############################################//
-volatile const unsigned int driveA_mode5_array[1]   = {500};
-volatile const unsigned int driveB_mode5_array[1]   = {500};
+//######################### MODE 5 ARRAY ############################################//     20Hz Square Wave Alternating 0%/~100%
+const int driveA_mode5_array[]   = {0, 0, 0, 0, 1000, 1000, 1000, 1000}; 
+const int driveB_mode5_array[]   = {0, 0, 0, 0, 1000, 1000, 1000, 1000};  
 
-//######################### MODE 6 ARRAY ############################################//
-volatile const unsigned int drive_mode6_array[10] = {320,0,320,0,320,0,320,0,320,0};
-volatile const unsigned int driveA_mode6_array[10] = {820,0,820,0,820,0,820,0,820,0};
-volatile const unsigned int driveB_mode6_array[10] = {820,0,820,0,820,0,820,0,820,0};
+//######################### MODE 6 ARRAY ############################################//     50Hz Square Wave ~75% power
+const int driveA_mode6_array[]  = {820,0,820,0,820,0,820,0,820,0};                          //showing different array values per motor array
+const int driveB_mode6_array[]  = {0,820,0,820,0,820,0,820,0,820};
 
-//######################### MODE 7 ARRAY ############################################//
-volatile const unsigned int drive_mode7_array[10] = {320,320,320,320,320,0,0,0,0,0};
-volatile const unsigned int driveA_mode7_array[10] = {320,320,320,320,320,0,0,0,0,0};
-volatile const unsigned int driveB_mode7_array[10] = {320,320,320,320,320,0,0,0,0,0};
+//######################### MODE 7 ARRAY ############################################//     Whatever pattern
+const int driveA_mode7_array[]  = {1020,1020,1020,1020,1020,800,800,800};
+const int driveB_mode7_array[]  = {1020,1020,1020,1020,1020,800,800,800};
 
-//######################### MODE 8 ARRAY ############################################//
-volatile const unsigned int drive_mode8_array[20] = {5,20,40,80,120,160,180,220,260,300, 300, 300, 300, 260,220,180,140,100,60,20};  
-volatile const unsigned int driveA_mode8_array[20] = {5,20,40,80,120,160,180,220,260,300, 300, 300, 300, 260,220,180,140,100,60,20}; 
-volatile const unsigned int driveB_mode8_array[20] = {5,20,40,80,120,160,180,220,260,300, 300, 300, 300, 260,220,180,140,100,60,20}; 
+//######################### MODE 8 ARRAY ############################################//     Random long Pattern
+const int driveA_mode8_array[]  = {200,400,800,800,800,800,400,200,200,400,400,600,600,700,800,1000,1000,1000,1000,900,700,400,200,200,200}; 
+const int driveB_mode8_array[]  = {200,400,800,800,800,800,400,200,200,400,400,600,600,700,800,1000,1000,1000,1000,900,700,400,200,200,200};
 
-//######################### MODE 9 ARRAY ############################################//
-volatile const unsigned int drive_mode9_array[10] = {5,40,80,120,160,200,240,280,320,320};
-volatile const unsigned int driveA_mode9_array[10] = {5,40,80,120,160,200,240,280,320,320};
-volatile const unsigned int driveB_mode9_array[10] = {5,40,80,120,160,200,240,280,320,320};
+//######################### MODE 9 ARRAY ############################################//     Whatever showing different array lengths
+const int driveA_mode9_array[]  = {0,400,500,600,700,800,900,1023};
+const int driveB_mode9_array[]  = {0,400,500,600,700,800,900,1023, 1023, 900, 800, 700, 600, 500, 400, 0};
 
-//######################### MODE 10 ARRAY ###########################################//
-volatile const unsigned int drive_mode10_array[31] = {0,34,68,102,136,170,204,238,272,306,340,374,408,442,476,510,544,578,612,646,680,714,748,782,816,850,884,918,952,986,1020};
-volatile const unsigned int driveA_mode10_array[31] = {0,34,68,102,136,170,204,238,272,306,340,374,408,442,476,510,544,578,612,646,680,714,748,782,816,850,884,918,952,986,1020};
-volatile const unsigned int driveB_mode10_array[31] = {0,34,68,102,136,170,204,238,272,306,340,374,408,442,476,510,544,578,612,646,680,714,748,782,816,850,884,918,952,986,1020};
+//######################### MODE 10 ARRAY ###########################################//     Motors opposing sweep - Kinda Cool feeling 
+const int driveA_mode10_array[] = {0,34,68,102,136,170,204,238,272,306,340,374,408,442,476,510,544,578,612,646,680,714,748,782,816,850,884,918,952,986,1020};
+const int driveB_mode10_array[] = {1020,986,952,918,884,850,816,782,748,714,680,646,612,578,544,510,476,442,408,374,340,306,272,238,204,170,236,102,68,34,0};
 
 
 
 
 
-//######################### SERIAL LED IDLE ARRAY ###################################//
-const unsigned int serLed_idleArray[147][3] = {
+//######################### SERIAL LED IDLE ARRAY {R, G, B}###################################//
+const unsigned int serLed_idleArray[147][3] = { //Slow Heartbeat- Made in Excel. 
 	{0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   //100ms
   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   //200ms
   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   {0,0,10},   //300ms

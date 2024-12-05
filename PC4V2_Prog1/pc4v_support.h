@@ -1,21 +1,19 @@
 #ifndef pc4v_support_h
 #define pc4v_support_h
-#include <Adafruit_NeoPixel.h>
-#include "Timer.h"
-#include "ArduinoLowPower.h"
-#include <WString.h>
-
-#include "mode_arrays.h"
-#include "script_led_array.h"
-
-#include "Arduino.h"
-#include "variant.h"
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_GFX.h>
-#include <Wire.h>
+#include <Adafruit_NeoPixel.h>    //Adafruit Repos - Sketch>>Include Library>>Manage Libraries
+#include "Timer.h"                //Belive this is Native? 
+#include "ArduinoLowPower.h"      //Search Lib Manager
+#include <WString.h>              //Belive this is Native? 
+#include "Arduino.h"              //Native Lib 
+#include "variant.h"              //Native Lib 
+#include <Adafruit_SSD1306.h>     //Adafruit Repos - 
+#include <Adafruit_GFX.h>         //Adafruit Repos - 
+#include <Wire.h>                 //Adafruit Repos - 
+#include "mode_arrays.h"          //program header file 
+#include "pyscript_led_array.h"   //program header file  
 
 
-//#include <samd21/include/samd21.h> //not needed with arduino framework. Use for AS7 framework
+//#include <samd21/include/samd21.h>      //not needed with arduino framework. Use for AS7 framework
 //#include <samd21/include/samd21e18a.h>  //not needed with arduino framework. Use for AS7 
 //#include <samd21e18a.h>
 /*
