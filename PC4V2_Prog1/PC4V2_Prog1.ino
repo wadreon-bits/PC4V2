@@ -5,7 +5,8 @@ Proto Control 4Volts Dual HBridge 2 channel output
 
 FW Versions:
 1.0		111824		Working rebuild of PC4V1 built for LDC. Refactored code for Arduino Framework. Sequences array pwm data to 2 H-bridge channels. 
-1.1   120124    First major working release to git- Could be used in field- 
+1.1   120124    First major working release to git- Could be used in field-
+1.2   120524    Changed btn_scan() function.  
 Arduino Setup Notes: 
 See pc4v_support.h for all the libraries needed. Must follow adafruit instructions on installing their libraries. Such as GFX etc.
 - Adafruit libraries are all located on a github repo. New version of arduino IDE is can search and install adafruit libs
@@ -56,8 +57,8 @@ TODO 1203- Prior to send
 //##############################################################
 //  Preprocessor #DEFINES
 //##############################################################
-#define FW_VERSION			"R1.1"	  //version of this application. Update with Any changes made
-#define FW_VER_DATE     "120524"  //Date of fw version update. Update when version changes. 
+#define FW_VERSION			"R1.2"	  //version of this application. Update with Any changes made
+#define FW_VER_DATE     "120624"  //Date of fw version update. Update when version changes. 
 //#define DEBUG_PRINTS            //comment out for formal release
 #define OLED_CONNECTED 
 //#define ENABLE_TIMERSCOPE       // If enabled- Can Scope LED output for timer calibration etc
@@ -65,9 +66,9 @@ TODO 1203- Prior to send
 #define TEN_MS_PER			    1     // multiple of APP_BASE_TIME [ms]
 #define BTN_SCAN_PER		    2     // multiple of APP_BASE_TIME [ms]
 #define SLEEP_TIMEOUT		    5     // Seconds of inactive until low power sleep
-#define BTN_SHORTPRESS_TIME	3     //*APP_BASE_TIME = 60ms
-#define BTN_NORMPRESS_TIME  6     //*APP_BASE_TIME = 120ms
-#define BTN_LONGPRESS_TIME  50    //*APP_BASE_TIME = 1000ms
+#define BTN_SHORTPRESS_TIME	3     //*APP_BASE_TIME*BTN_SCAN_PER = 60ms
+#define BTN_NORMPRESS_TIME  6     //*APP_BASE_TIME*BTN_SCAN_PER = 120ms
+#define BTN_LONGPRESS_TIME  50    //*APP_BASE_TIME*BTN_SCAN_PER = 1000ms
 #define APP_LVC             3.49  // Lipo Low Voltage Cutoff. Governed by OLED pwred by 3.3LDO
 #define NONE				        0
 
@@ -89,9 +90,9 @@ TODO 1203- Prior to send
 //#define DRIVE_ISENSEB A5  //Drive Current Ref
 #define OLED_EN_PIN   15    //FeatherM0:  A1
 
-#define DRIVE_A1_PIN	12        //
+#define DRIVE_A1_PIN	10        //
 #define DRIVE_A2_PIN  11        //
-#define DRIVE_B1_PIN	10        //
+#define DRIVE_B1_PIN	12        //
 #define DRIVE_B2_PIN  16        //  FeatherM0: A2
 #define DRIVE_SLP_PIN 17        //  FeatherM0: A3
 #define DRIVE_FLT_PIN 18        //  FeatherM0: A4
@@ -125,7 +126,7 @@ volatile bool flag_scanBtns   = false;    //flag
 volatile bool flag_10ms       = false;    //flag
 volatile bool flag_100ms      = false;    //flag
 volatile bool flag_1second    = false;    //flag
-volatile bool btns_pressed    = false;    //event
+
 volatile bool flag_flickerLED = false;    //event
 volatile bool flag_gotoSleep  = false;    //event
 volatile bool flag_wake_init  = false;    //flag
@@ -396,10 +397,10 @@ void app_update() { //runs every 10ms
 }//end of function
 
 /*simple btn scan function - loads byte with pin status- Reads buttons/Debounces/Manages state variables*/
-void scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
-  static int case_cnt;
-  static int ui_static_cnt = 0;
-  static int btn_release_event = 0;
+unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
+  static unsigned int case_cnt;
+  static unsigned int ui_static_cnt = 0;
+  static unsigned int btn_release_event = 0;
   static bool ui_blocked = false;
 
 	pinMode(BTN_1_PIN, INPUT_PULLUP);
@@ -411,19 +412,16 @@ void scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
   //int btn_state[2]   btn_state[1]: btn pressed, btn_state[2]: count
 
   /*TEST FOR BTNS CHANGED??*/
-  if (btns_state != btns_stateLast) {
+  if (btns_state != btns_stateLast) {   // ### TEST FOR CHANGE IN BTNS ###
     btns_cnt = 0; 
-    if (btns_state == 0)
-      btns_pressed = false;
-      //btns_released event right
-    else {
-      btns_pressed = true;
-    }
     case_cnt = 0; //btns have changed- reset case_cnt
+    if (btns_state == 0){  //btns have changed, and are just released released 
+      if(btn_release_event) btns_state = btn_release_event;
+      btn_release_event = 0;
+    } 
   }
-  else //nothing has changed 
-    btns_cnt++; 
-  
+  else    //!### NOTHING HAS CHANGED !###
+    btns_cnt++;               //counting any press combo, case_cnt counts only defined cases. 
   
   /* TEST FOR BUTTONS PRESSED OR RELEASED */
   if (btns_state == 0) {
@@ -438,58 +436,55 @@ void scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
   /*SAVE BUTTON STATE*/
   btns_stateLast = btns_state; //maybe move to end. Incorporate single click pending test up top of function
   
-  /*COPY RELEASE EVENT INTO BTN STATE TO SETUP A RELEASE EVENT*/
-  if (btn_release_event && !btns_pressed) {
-    btns_state = btn_release_event;
-    //btn_release_event = 0;
-  }
 
-  if (!ui_blocked) {
-    switch (btns_state) {
-      case 0:
+  if(ui_blocked) return btns_state;
+
+  switch (btns_state) {   //Begin Case Statement User Interface - UI 
+    case 0:
+      case_cnt = 0;
+    break;
+
+    case BTN_UP_MASK:
+      /*Begin testing for short First Click*/
+      if (case_cnt == BTN_SHORTPRESS_TIME) {
+      //case_cnt = 0;
+        req_mode++; 
+      }
+      case_cnt++;  //case_cnt is an integer will rollover at 65k- Can play with location to make one-shot or repeated events
+      if(case_cnt >= 20)
+        case_cnt = 0; 
+    break;
+
+    case BTN_DWN_MASK:
+      if (case_cnt == BTN_SHORTPRESS_TIME){
+        req_mode--;
+        //ui_blocked = true; 
+        //case_cnt = 0; //reset case_cnt for sustained increment
+      }      
+      case_cnt++;
+      if(case_cnt >= 20)
+        case_cnt = 0; 
+    break;
+
+    case BTN_ALL_MASK:
+      if (case_cnt == BTN_NORMPRESS_TIME+4) {
         case_cnt = 0;
-      break;
-
-      case BTN_UP_MASK:
-		    /*Begin testing for short First Click*/
-        if (case_cnt == BTN_SHORTPRESS_TIME) {
-			  //case_cnt = 0;
-			    req_mode++; 
-        }
-        case_cnt++;  //case_cnt is an integer will rollover at 65k- Can play with location to make one-shot or repeated events
-        if(case_cnt >= 20)
-          case_cnt = 0; 
-      break;
-
-      case BTN_DWN_MASK:
-        if (case_cnt == BTN_SHORTPRESS_TIME){
-          req_mode--;
-          //ui_blocked = true; 
-          //case_cnt = 0; //reset case_cnt for sustained increment
-        }      
+        serLed_flicker(50); 
+        //btn_release_event = BTN_ALL_MASK;
+        ui_blocked = true; 
+      }
+      else 
         case_cnt++;
-        if(case_cnt >= 20)
-          case_cnt = 0; 
+      
+    break;
+
+    default:
+      case_cnt = 0;
       break;
 
-      case BTN_ALL_MASK:
-        if (case_cnt == BTN_NORMPRESS_TIME+4) {
-          case_cnt = 0;
-          serLed_flicker(50); 
-          //btn_release_event = BTN_ALL_MASK;
-          ui_blocked = true; 
-        }
-        else 
-          case_cnt++;
-        
-			break;
+  }//end switch(btns_state)
 
-      default:
-        case_cnt = 0;
-        break;
-
-    }//end switch(btns_state)
-  }//end of block
+  return btns_state;
 }//end scan_btns function
 
 /*Manage Drive and LED - run every mode time slice = 10ms */
@@ -952,7 +947,7 @@ void loop() {
     flag_100ms = false;
     if(!flag_crit_batt)
       manage_disp(USERMODE);
-    if(btns_pressed == false)
+    if(btns_state == 0)
       read_batt();
   }//end of 100ms
 
