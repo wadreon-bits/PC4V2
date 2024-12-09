@@ -968,19 +968,6 @@ void loop() {
 
 //BELOW CONVENIENCE FUNCTIONS
 
-/*Uses set_drive to increment pwm duty by req amnt*/
-void step_drive(int channel, bool dir, int step_size){
-	int temp_state;
-	
-	temp_state = drive_state;
-	if(dir){
-		set_drive(1, temp_state+step_size);
-	}
-	else{
-		set_drive(1, temp_state-step_size);
-	
-	}
-}
 
 /*Primary H-Bridge Motor Function*/ //setdrive(channel, duty))
 void set_drive(int channel, int duty){ //(-1023 to 1023, 0 is off)
