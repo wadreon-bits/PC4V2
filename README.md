@@ -27,6 +27,14 @@ Setting Up Arduino IDE:
 5. All other libs used should be native to arduino IDE. 
 6. Locate the PC4V2_Prog1 folder within your Documents>Arduino sketch folder. 
 
+Programming Device:
+1. Plug into PC USB port
+2. Open Arduino IDE
+3. Tools>>Boards  - Select Adafruit Feather M0 Express
+4. With a Tack or Paperclip-  Double click the pinhole button on the front button face- proto_UIcontrol.
+5. After the double-click, the feather should re-mount as a new USB com-port. NeoPixel will pulse Red when in proper bootloader mode.
+6. Tools>>Port  - Select the port that now shows (Adafruit Feather M0 Express (SAMD21)).
+7. Sketch>>Upload. 
 
 Firmware Notes:
 1. Firmware application built original in AS7 at LDC- modified to use Arduino framework
