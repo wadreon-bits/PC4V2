@@ -1,15 +1,15 @@
 /*
 111824
-PC4V2 - MotorTester1S 
+PC4v2 - MotorTester1S 
 Proto Control 4Volts Dual HBridge 2 channel output
 
-FW Versions:
+FW Versions: See Repo for version history
 1.0		111824		Working rebuild of PC4V1 built for LDC. Refactored code for Arduino Framework. Sequences array pwm data to 2 H-bridge channels. 
-1.1   120124    First major working release to git- Could be used in field-
-1.2   120524    Changed btn_scan() function.  
+
 Arduino Setup Notes: 
 See pc4v_support.h for all the libraries needed. Must follow adafruit instructions on installing their libraries. Such as GFX etc.
-- Adafruit libraries are all located on a github repo. New version of arduino IDE is can search and install adafruit libs
+- Adafruit libraries are all located on a github repo. New version of arduino IDE can search and install adafruit libs natively.
+- So if using >=Arduino Version 2.3.3, No need to add link for the adafruit git repo's. 
 Sketch >> Include Library >> Library Manager >> Manage Libraries >> Search for library 
 
 HARDWARE NOTES:
@@ -23,19 +23,13 @@ UP - Generic Up index for UI
 DWN - Generic Dwn index for UI
 
 Primary Functions to Adjust for Product Interface -
-	- app_update()    App Timing			      Manages	primary application timing/time slicing
-	- btn_scan()      BTN UI/Ergonomics			Manages Button ergo- press timing, clicks, etc
-	- mode_manager()	Functional Modes		  Manages enabling motor/led modes and handling periodic mode events
+	- app_update()    App Timing			      Manages	primary application timing/time slicing. Basic app. 
+	- btn_scan()      BTN UI/Ergonomics			Manages Button ergo- press timing, clicks, etc. Removed clicks for ERM PC4V2
+	- mode_manager()	Functional Modes		  Manages enabling motor/led modes and handling periodic mode events. Processes mode_arrays!
   - disp_manager()  OLED Interface        Single function to write/read from OLED display. 
 	
 Notes-
 Arduino makes code writing FAST!!! I hate the IDE- USE AS7 or VScode 
-
-TODO 1203- Prior to send
-- Clean up float use in batt read
-- Modify and insert useable arrays for all modes
-- clean up flags vs events? 
-- 
 */
 //##############################################################
 //  Preamble Include definitions
@@ -57,8 +51,8 @@ TODO 1203- Prior to send
 //##############################################################
 //  Preprocessor #DEFINES
 //##############################################################
-#define FW_VERSION			"R1.2"	  //version of this application. Update with Any changes made
-#define FW_VER_DATE     "120624"  //Date of fw version update. Update when version changes. 
+#define FW_VERSION			"R1.4"	  //version of this application. Update with Any changes made
+#define FW_VER_DATE     "120724"  //Date of fw version update. Update when version changes. 
 //#define DEBUG_PRINTS            //comment out for formal release
 #define OLED_CONNECTED 
 //#define ENABLE_TIMERSCOPE       // If enabled- Can Scope LED output for timer calibration etc
@@ -139,14 +133,17 @@ volatile bool flag_blockSleep = false;    //set to true to disable sleep
 volatile bool disp_changed    = false; 
 bool written_once             = false;
 
+
 /*Global variables*/
-volatile unsigned int btns_state  = 0;	// stores pins states
+volatile unsigned int btns_state  = 0;	// read - stores pins states
 volatile unsigned int btns_cnt    = 0;	// stores pins states
 unsigned int btns_stateLast       = 0;		// last pin states
 
-volatile signed int drive_state   = 0;	// Current output duty of drive. 
-volatile signed int req_mode      = 0;		// Not very useful- redundant- currently used to track first pass through event_manager- could use case_cnt
+
+volatile signed int drive_state   = 0;	// Read - Current output duty of drive. 
+volatile signed int req_mode      = 0;	// 
 volatile signed int active_mode   = 99;	// MODE = USER SETTING or USER LEVEL
+volatile signed int aux_pwm       = 0; 
 unsigned int led_on               = 0;				// counter to turn off led
 unsigned int sleep_counter        = 0;         //
 int timer_id                      = 0; 
@@ -158,6 +155,8 @@ int temp_32;
 float batt_volts;
 float avg_batt_volts = 4.0; 
 String batt_soc; 
+//dispState_e disp_state = BOOT; 
+enum appState_e app_state = BOOT; 
 
 /* Instantiate Class Object Variables */
 Timer app_timer;
@@ -201,14 +200,7 @@ void SYSCTRL_Handler(){
 /*Power Manager interupt support routine - Not being used*/
 //void PM_handler(void){
 	//if(REG_PM_RCAUSE == 0x04){ //Brown Out Detected-- Goto Sleep
-		//serled.setPixelColor(0, serled.Color(150, 0, 0));
-		//serled.show();
 		//app_timer.stop(timer_id);
-		//delay(500);
-		//serLed_off();
-		//
-		//timer_id = app_timer.every(APP_BASE_TIME, app_update);
-		////LowPower.deepSleep();
 	//}
 //}
 
@@ -276,7 +268,8 @@ void setup() {
 	serled.show();                    //send off command to pix
  #ifdef OLED_CONNECTED
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
-    manage_disp(BOOT);                          // Display BOOT screen - version etc. 
+    app_state = BOOT;
+    manage_disp();                          // Display BOOT screen - version etc. 
 #endif
 
 #ifdef DEBUG_PRINTS
@@ -288,6 +281,7 @@ void setup() {
 	timer_id = app_timer.every(APP_BASE_TIME, app_update);  //Main app timer
 	__enable_irq(); //enable global IRQ;                    //Enable Global Interuppts- Not sure if needed in arduino land
 	flag_gotoSleep = true;            // Goto sleep right away
+  app_state = USERMODE; 
   flag_updateDisp = true;           // 
 }
 
@@ -313,7 +307,8 @@ void init_sleep(void){ //called before sleep call
 	pinMode(BTN_2_PIN, INPUT_PULLUP);
 
   //CLEAR AND DISABLE DISPLAY 
-  manage_disp(INITSLEEP);
+  app_state = INITSLEEP; 
+  manage_disp();
   delay(1);
   //DISABLE DISPLAY
   pinMode(OLED_EN_PIN, INPUT);  //PULL UP TURNS OFF
@@ -341,7 +336,11 @@ void init_wakeUp(void){ //called right after wakeup
   digitalWrite(OLED_EN_PIN, LOW);  //set low to enable - pchannel hi-side fet. 
 
   delay(200); //allow charge pump to fill on OLED- Takes awhile
-  manage_disp(INITWAKE);
+  app_state = INITWAKE; 
+   
+  manage_disp();
+  app_state = USERMODE;
+  //manage_disp(INITWAKE);
   //__enable_irq();   //re-enable global interrupts
 }
 
@@ -431,6 +430,7 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
   else{
     ui_static_cnt = 0;
     sleep_counter = 0;
+    //btns_state = btns_state<<app_state; 
   }
 
   /*SAVE BUTTON STATE*/
@@ -467,15 +467,21 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
     break;
 
     case BTN_ALL_MASK:
-      if (case_cnt == BTN_NORMPRESS_TIME+4) {
-        case_cnt = 0;
-        serLed_flicker(50); 
-        //btn_release_event = BTN_ALL_MASK;
-        ui_blocked = true; 
+      if (case_cnt == BTN_LONGPRESS_TIME) {
+        //case_cnt = 0;
+        if(app_state == USERMODE){
+          app_state = AUX;
+          serLed_on(197, 42, 121);
+        }
+        else if(app_state == AUX){
+          app_state = USERMODE;
+          serLed_off();
+        }
+
       }
-      else 
-        case_cnt++;
-      
+      flag_updateDisp = true; 
+      case_cnt++;
+      req_mode = 0; 
     break;
 
     default:
@@ -496,12 +502,10 @@ void manage_modes(){
 	static int mode_indexB = 0;	//generic use motor channelB
   static unsigned int arraysizeA = 0;
   static unsigned int arraysizeB = 0;
-	
-	if(req_mode > 10)
-		req_mode = 0;
-  if(req_mode < 0)
-    req_mode = 0;
-	
+
+
+
+
 	if(req_mode!=active_mode){
 		mode_indexA=0;
 		mode_indexB=0;
@@ -509,14 +513,37 @@ void manage_modes(){
     #ifdef DEBUG_PRINTS
       Serial.println("Mode:"+String(req_mode));
     #endif
-	}    
+	} 
+
+  if(app_state == AUX){
+    if(req_mode>204)  req_mode = 0;
+    if(req_mode<0) req_mode = 0;
+
+    aux_pwm = req_mode * 5; 
+    if(drive_state != aux_pwm){
+      set_drive(1, aux_pwm);
+      set_drive(2, aux_pwm);
+      flag_updateDisp = true; 
+      active_mode = req_mode; 
+    }
+    return;   
+  }
+	else{
+    if(req_mode > 10)
+      req_mode = 0;
+    if(req_mode < 0)
+      req_mode = 0;
+  }
+
 
 	switch(req_mode){
 		case 0:
 			//Idle ready for input or sleep timeout
-			if(drive_state!=0)
+			if(drive_state!=0){
 				set_drive(1, 0);
         set_drive(2, 0);
+      }
+
 			
 			serLed_on(serLed_idleArray[period_cnt][0], serLed_idleArray[period_cnt][1], serLed_idleArray[period_cnt][2]);
 			period_cnt++;
@@ -528,6 +555,8 @@ void manage_modes(){
 		
 		case 1:
 			if(active_mode!=req_mode){//mode_counters should be zero
+        set_drive(1, 0);
+        set_drive(2, 0);
 				serLed_on(0,0, 20);
 				//serLed_off();
 				active_mode = req_mode;
@@ -553,6 +582,8 @@ void manage_modes(){
 		
 		case 2:
 			if(active_mode!=req_mode){//mode_counters should be zero
+        set_drive(1, 0);
+        set_drive(2, 0);
 				serLed_on(0,0, 50);
 				//serLed_off();
 				active_mode = req_mode;
@@ -578,7 +609,9 @@ void manage_modes(){
 
 		case 3:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(0,0, 100);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode3_array);  //check array lengths
@@ -603,7 +636,9 @@ void manage_modes(){
       
 		case 4:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(0,0, 150);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode4_array);  //check array lengths
@@ -628,7 +663,9 @@ void manage_modes(){
 
 		case 5:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(0,0, 250);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode5_array);  //check array lengths
@@ -652,6 +689,8 @@ void manage_modes(){
 
 		case 6:
 			if(active_mode!=req_mode){//mode_counters should be zero
+        set_drive(1, 0);
+        set_drive(2, 0);
 				serLed_on(150,0, 150);
 				//serLed_off();
 				active_mode = req_mode;
@@ -676,7 +715,9 @@ void manage_modes(){
 
 		case 7:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(20,120, 75);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode7_array);  //check array lengths
@@ -701,7 +742,9 @@ void manage_modes(){
 		
     case 8:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(150,50, 20);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode8_array);  //check array lengths
@@ -726,7 +769,10 @@ void manage_modes(){
 
 		case 9:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+        
+				serLed_on(20,150, 30);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode9_array);  //check array lengths
@@ -751,7 +797,9 @@ void manage_modes(){
 
 		case 10:
 			if(active_mode!=req_mode){//mode_counters should be zero
-				serLed_on(0,0, 20);
+        set_drive(1, 0);
+        set_drive(2, 0);
+				serLed_on(75,37, 0);
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode10_array);  //check array lengths
@@ -771,24 +819,22 @@ void manage_modes(){
           if(mode_indexB>(arrayLen(driveB_mode10_array)-1))
             mode_indexB = 0;
         }
-      }  
-			// if(active_mode!=req_mode){
-			// 	serLed_on(75,37, 0);
-			// 	set_drive(1, 0);
-			// 	active_mode = req_mode;
-      //   mode_indexB = arrayLen(drive_mode10_array)-1;
-			// }
-			// else{
-			// 	set_drive(1, drive_mode10_array[mode_indexA++]);
-      //   set_drive(2, drive_mode10_array[mode_indexB--]);
-	
-			// 	if(mode_indexA>(arrayLen(drive_mode10_array)-1))
-			// 		mode_indexA = 0;
-			// 	if(mode_indexB < 0)
-			// 		mode_indexB = arrayLen(drive_mode10_array)-1;
-          
-			// }			
+      }   
 			break;
+
+		// case AUX:
+		// 	if(active_mode!=req_mode){//mode_counters should be zero
+		// 		serLed_on(0,0, 20);
+		// 		//serLed_off();
+		// 		active_mode = req_mode;
+    //       (if drive_state != aux_pwm){
+    // //     set_drive(1, aux_pwm);        //set drive in motion using first value in array
+    // //     set_drive(2, aux_pwm);
+    //       }
+
+		// 	}
+  
+		// 	break;
 		
 	} // end of switch
 }
@@ -796,11 +842,12 @@ void manage_modes(){
 
 /**************** MAIN OLED DISPLAY FUNCTION****************/
 /***************  CALLED EVERY xMS within app_update *******/
-bool manage_disp(dispState_e disp_state){
+bool manage_disp(){
 bool retval=false;
+float percent_pwm;
 
 #ifdef OLED_CONNECTED
-  switch (disp_state) {
+  switch (app_state) {
     case BOOT:
       display.display();
       display.clearDisplay();
@@ -869,6 +916,39 @@ bool retval=false;
       }
       flag_updateDisp = false; 
     break;
+    case AUX:
+    if(flag_updateDisp){
+      
+      display.clearDisplay();
+      display.drawRect(0,0, 40, 12, WHITE); //empty cell
+      display.drawRect(40,3,5,6, WHITE); //button
+      if(avg_batt_volts >= 4.0){    //full batt
+        display.fillRect(0,0, 40, 12, WHITE);
+      }
+      else if(avg_batt_volts >= 3.8){
+        display.fillRect(0,0, 30, 12, WHITE);
+      }
+      else if(avg_batt_volts >= 3.6){
+        display.fillRect(0,0, 20, 12, WHITE);
+      }
+      else if(avg_batt_volts >= 3.5){
+        display.fillRect(0,0, 10, 12, WHITE);
+      }
+
+      display.setCursor(60,2);
+      display.setTextSize(1);
+      display.print(String(avg_batt_volts)+" Vdc");     
+      
+      display.setTextSize(2);
+      display.setCursor(0,17);
+      percent_pwm = (aux_pwm/1000.0)*100.0;
+      if(percent_pwm > 100.0) percent_pwm = 100.0; 
+      display.print("%: "+String(percent_pwm, 1));
+      display.display();
+
+    }
+    flag_updateDisp = false; 
+    break;
 
   }
   retval = true;
@@ -884,6 +964,7 @@ void loop() {
   if(flag_wake_init){
     flag_wake_init = false; 
     init_wakeUp();
+    app_state = USERMODE; 
   }
     
   if(flag_gotoSleep){
@@ -925,7 +1006,7 @@ void loop() {
 		if(flag_crit_batt){
 			//flag_update_disp = true;
       if(!written_once)
-			  serLed_on(120, 0, 0);
+			  serLed_on(120, 0, 0); //low batt red 
 
       written_once = true; 
       crit_batt_cntdown--;    //beat the sleep clock 
@@ -934,7 +1015,8 @@ void loop() {
 		}
     else if(flag_low_batt == true){
       flag_low_batt = false; 
-      manage_disp(LOWBATT);
+      app_state = LOWBATT;
+      manage_disp();
       flag_crit_batt = true; 
       crit_batt_cntdown = 200;
       //warn User-
@@ -946,14 +1028,14 @@ void loop() {
   if (flag_100ms) {
     flag_100ms = false;
     if(!flag_crit_batt)
-      manage_disp(USERMODE);
+      manage_disp();
     if(btns_state == 0)
       read_batt();
   }//end of 100ms
 
   if (flag_1second) {
     flag_1second = false;
-   // scale_batt();
+
 		if(sleep_counter == SLEEP_TIMEOUT) 	//move to moode_manager case0???
 			flag_gotoSleep = true;
 		else
@@ -977,11 +1059,13 @@ void set_drive(int channel, int duty){ //(-1023 to 1023, 0 is off)
     temp_pinA = DRIVE_A1_PIN;
     temp_pinB = DRIVE_A2_PIN;
     //pwm_channel = A0; 
+    //driveA_state = duty;
   }
   else if(channel == 2){
     temp_pinA = DRIVE_B1_PIN;
     temp_pinB = DRIVE_B2_PIN;   
     //pwm_channel = A1; 
+    //driveB_state = duty;
   }
   else
     return; 
@@ -1004,12 +1088,12 @@ void set_drive(int channel, int duty){ //(-1023 to 1023, 0 is off)
 		else if(duty<0){//dir2
 			digitalWrite(temp_pinA, LOW);
 			digitalWrite(temp_pinB, HIGH);
-			analogWrite(temp_pinA, abs(1023-duty));
+			analogWrite(temp_pinA, abs(1023+duty));
 		}
 		
 		drive_state = duty;
 	}
-	else{ //duty = 0 - Turn off motors. 
+	else{ //duty = 0 - Turn off motor. 
 		pinMode(temp_pinA, OUTPUT);
 		pinMode(temp_pinB, OUTPUT);
 		digitalWrite(temp_pinA, LOW);
@@ -1026,11 +1110,13 @@ void read_batt(void){
   static float avg_buffr[10] = {4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0};
 	static int i = 0; 
 
+ // if(btns_state != 0) return; 
+
 	pinMode(BTN_UP, OUTPUT);
   digitalWrite(BTN_UP, HIGH);
   pinMode(BTN_UP, INPUT);
 	//delayMicroseconds(100);
-	delay(1);
+	delay(2);
 	float measuredvbat = analogRead(A7);
 	//float measuredvbat = 3.3; 
 	measuredvbat *= 2;    // we divided by 2, so multiply back

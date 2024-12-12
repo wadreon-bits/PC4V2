@@ -10,7 +10,7 @@
 #include <Adafruit_GFX.h>         //Adafruit Repos - 
 #include <Wire.h>                 //Adafruit Repos - 
 #include "mode_arrays.h"          //program header file 
-#include "pyscript_led_array.h"   //program header file  
+//#include "pyscript_led_array.h"   //program header file  
 
 
 //#include <samd21/include/samd21.h>      //not needed with arduino framework. Use for AS7 framework
@@ -26,7 +26,7 @@
 #define LDC_HW_TYPE			0x01	// this should be driven from hw pin 
 #define LDC_HW_VER			0x10	// this should be driven from hw pin 
 
-#define TARGET_HW_TYPE		0x01		//What is the target hardware board for this software??
+#define TARGET_HW_TYPE	0x01		//What is the target hardware board for this software??
 #define TARGET_HW_VER		0x10		// 0xMAJOR|MINOR
 
 #define PACKG_TARGET_HW_TYPE			//this should be stored in the variant file!!
@@ -72,12 +72,21 @@
 #endif
 
 */
-enum dispState_e{
+// enum dispState_e{
+//   BOOT,
+//   INITSLEEP,
+//   INITWAKE,
+//   LOWBATT,
+//   USERMODE,
+// };
+
+enum appState_e{
   BOOT,
   INITSLEEP,
   INITWAKE,
   LOWBATT,
   USERMODE,
+  AUX
 };
 
 enum userMode_e{

@@ -11,10 +11,8 @@ The Hardware consists of the following:
 4. DRV8833 TI Drive Breakout
 5. 3d Printed housing - Onshape: Proto_UIcontrol>>Enclosure4V2
 6. See code for pinouts 
-
-If adding low power disable to OLED- Following also needed - NOT NEEDED - REMOVE THIS!!!! 
-5. BS84 P-Chan Mosfet- OLED Pwr Switch
-6. 0402 15-20k ohm resistor (Pull up for pchannel)
+7. (Not Used)BS84 P-Chan Mosfet- OLED Pwr Switch
+8. (Not USed)0402 15-20k ohm resistor (Pull up for pchannel)
 
 Setting Up Arduino IDE:
 1. Download latest IDE from Arduino. Built using (version 2.3.3)
@@ -43,9 +41,7 @@ FW Functional Description:
 3. If new information is avaialable- an update is made to the OLED 
 
 
-
-!!!!!!!!! Making Edits to Motor Waveforms !!!!!!!!!!!!
-
+Modifying Motor Waveform Patterns: 
 Adjustments to ERM output patterns will be made within mode_arrays.h
 This file can easily be modified for any waveform of interest.
 Code must be re-compiled after changes are mode.  
