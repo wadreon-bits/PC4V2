@@ -345,9 +345,9 @@ void init_wakeUp(void){ //called right after wakeup
 }
 
 /*Button Interrupt- Can use. Or rely on app polling*/
-void btn_ISR() {
-  flag_scanBtns = true;
-}
+// void btn_ISR() {
+//   flag_scanBtns = true;
+// }
 /*Wake Interrupt- Called for wakeup ISR */
 void wake_ISR(){
   //__disable_irq();
@@ -369,7 +369,7 @@ void app_update() { //runs every 10ms
   #endif
 
   /*Polling Button Flag */
-  if (++btnScan_timer >= BTN_SCAN_PER) { //BTN_SCAN_PER = 4 so 40millisconds - 25Hz
+  if (++btnScan_timer >= BTN_SCAN_PER) { //BTN_SCAN_PER = 2 so 20millisconds 50hz
     btnScan_timer = 0;
     flag_scanBtns = true;
   }
