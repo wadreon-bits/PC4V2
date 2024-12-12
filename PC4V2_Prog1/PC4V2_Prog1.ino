@@ -34,6 +34,7 @@ Arduino makes code writing FAST!!! I hate the IDE- USE AS7 or VScode
 //##############################################################
 //  Preamble Include definitions
 //##############################################################
+
 #include "pc4v_support.h"
 
 //##############################################################
@@ -48,11 +49,10 @@ Arduino makes code writing FAST!!! I hate the IDE- USE AS7 or VScode
 #endif
 //End of Auto generated function prototypes by Atmel Studio
 
-
-
 /*MACROS*/  
 #define WIRE Wire 
 #define arrayLen(x) sizeof(x)/sizeof(x[0])  //custom macro for sizing motor/led arrays. 
+//#define arrayLen(x) sizeof(x)/sizeof(x[0])  //custom macro for sizing motor/led arrays. 
 
 /*GLOBAL APP EVENT FLAGS*/ 
 volatile bool flag_scanBtns   = false;    //flag
@@ -475,7 +475,7 @@ void usermode_events(){
 	static int mode_indexB = 0;	//generic use motor channelB
   static unsigned int arraysizeA = 0;
   static unsigned int arraysizeB = 0;
-
+  int offset = req_mode -1;
 
   if(req_mode > 10)
     req_mode = 0;
@@ -483,7 +483,6 @@ void usermode_events(){
     req_mode = 0;
 
   if(req_mode != 0) sleep_counter = 0; //keep awake if not idle
-
 
 	if(req_mode!=active_mode){
 		mode_indexA=0;
@@ -494,7 +493,6 @@ void usermode_events(){
     #endif
 	} 
 
-//
 	switch(req_mode){
 		case 0:
 			//Idle ready for input or sleep timeout
@@ -502,8 +500,6 @@ void usermode_events(){
 				set_drive(1, 0);
         set_drive(2, 0);
       }
-
-			
 			serLed_on(serLed_idleArray[period_cnt][0], serLed_idleArray[period_cnt][1], serLed_idleArray[period_cnt][2]);
 			period_cnt++;
 			if(period_cnt>(arrayLen(serLed_idleArray)-1))
@@ -512,275 +508,30 @@ void usermode_events(){
 				active_mode = req_mode; 
 			break;
 		
-		case 1:
+		case 1 ... 10:
 			if(active_mode!=req_mode){//mode_counters should be zero
         set_drive(1, 0);
         set_drive(2, 0);
-				serLed_on(0,0, 20); //rgb value, 
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode1_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode1_array);
-        set_drive(1, driveA_mode1_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode1_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode1_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode1_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode1_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode1_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;
-		
-		case 2:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(0,0, 50);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode2_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode2_array);
-        set_drive(1, driveA_mode2_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode2_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode2_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode2_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode2_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode2_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;
-
-		case 3:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(0,0, 100);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode3_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode3_array);
-        set_drive(1, driveA_mode3_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode3_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode3_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode1_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode3_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode1_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;	
-      
-		case 4:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(0,0, 150);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode4_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode4_array);
-        set_drive(1, driveA_mode4_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode4_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode4_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode4_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode4_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode4_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;
-
-		case 5:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(0,0, 250);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode5_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode5_array);
-        set_drive(1, driveA_mode5_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode5_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode5_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode5_array)-1))
-            mode_indexA = 0;
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode5_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode5_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;
-
-		case 6:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(150,0, 150);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode6_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode6_array);
-        set_drive(1, driveA_mode6_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode6_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode6_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode6_array)-1))
-            mode_indexA = 0;
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode6_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode6_array)-1))
-            mode_indexB = 0;
-        }
-      }        
-			break;
-
-		case 7:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(20,120, 75);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode7_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode7_array);
-        set_drive(1, driveA_mode7_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode7_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode7_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode7_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode7_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode7_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-		  break; 
-		
-    case 8:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(150,50, 20);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode8_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode8_array);
-        set_drive(1, driveA_mode8_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode8_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode8_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode8_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode8_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode8_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break; 
-
-		case 9:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
+				serLed_on(usermode_leds[offset][0],usermode_leds[offset][1],usermode_leds[offset][2]); //rgb value, 
         
-				serLed_on(20,150, 30);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode9_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode9_array);
-        set_drive(1, driveA_mode9_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode9_array[0]);
+        set_drive(1, ptr_arraysA[offset][0]);        //set drive in motion using first value in array
+        set_drive(1, ptr_arraysB[offset][0]);        //set drive in motion using first value in array
+        active_mode = req_mode;
 			}
       else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode9_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode9_array)-1))
+        if(arrayA_lengths[offset]>1){                                     //if array is larger than 1, continue indexing
+          set_drive(1, ptr_arraysA[offset][mode_indexA++]);
+          if(mode_indexA>(arrayA_lengths[offset]-1))
             mode_indexA = 0;
 
         }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode9_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode9_array)-1))
+        if(arrayB_lengths[offset]>1){
+          set_drive(2, ptr_arraysB[offset][mode_indexB++]);
+          if(mode_indexB>(arrayB_lengths[offset]-1))
             mode_indexB = 0;
         }
       }   
 			break;
-
-		case 10:
-			if(active_mode!=req_mode){//mode_counters should be zero
-        set_drive(1, 0);
-        set_drive(2, 0);
-				serLed_on(75,37, 0);
-				//serLed_off();
-				active_mode = req_mode;
-        arraysizeA = arrayLen(driveA_mode10_array);  //check array lengths
-        arraysizeB = arrayLen(driveB_mode10_array);
-        set_drive(1, driveA_mode10_array[0]);        //set drive in motion using first value in array
-        set_drive(2, driveB_mode10_array[0]);
-			}
-      else{
-        if(arraysizeA>1){                                     //if array is larger than 1, continue indexing
-          set_drive(1, driveA_mode10_array[mode_indexA++]);
-          if(mode_indexA>(arrayLen(driveA_mode10_array)-1))
-            mode_indexA = 0;
-
-        }
-        if(arraysizeB>1){
-          set_drive(2, driveB_mode10_array[mode_indexB++]);
-          if(mode_indexB>(arrayLen(driveB_mode10_array)-1))
-            mode_indexB = 0;
-        }
-      }   
-			break;
-		
 	} // end of switch
 }
 

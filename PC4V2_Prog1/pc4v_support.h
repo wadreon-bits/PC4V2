@@ -12,7 +12,6 @@
 #include "mode_arrays.h"          //program header file 
 //#include "pyscript_led_array.h"   //program header file  
 
-
 //#include <samd21/include/samd21.h>      //not needed with arduino framework. Use for AS7 framework
 //#include <samd21/include/samd21e18a.h>  //not needed with arduino framework. Use for AS7 
 //#include <samd21e18a.h>
@@ -38,7 +37,7 @@
 //##############################################################
 //  Preprocessor #DEFINES
 //##############################################################
-#define FW_VERSION			"R1.5"	  //version of this application. Update with Any changes made
+#define FW_VERSION			"R2.0"	  //version of this application. Update with Any changes made
 #define FW_VER_DATE     "121124"  //Date of fw version update. Update when version changes. 
 //#define DEBUG_PRINTS            //comment out for formal release
 #define OLED_CONNECTED 
