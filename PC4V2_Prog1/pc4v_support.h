@@ -34,51 +34,70 @@
 #define PACKG_TARGET_HW_VER				// Managed in variant files check to see if 
 										// should the package check the HW???  '
 										// 
-					
-//there will be following
-//Hw version- what board build is it?? PCB version?
-//package version- what framework?? variants/pins etc?? 
-// can define LDC_PACKAGE_VER in the 
-//hw version must be compatible with framework version
-//hw version could be read from board?? 
-	// loaded into bootloader?
-	// read on free pin?? 
-//application version must be compatible with both of above
-//application version
-/*
-#ifndef __SAMD21E18A__
-	#error "Unsupported Hardware!!- Use correct LDC Hardware type"
-#endif
 
-#if (LDC_HW_TYPE != TARGET_HW_TYPE)
-	#error "Unsupported Hardware!!- Use correct LDC Hardware type"
-#endif
-*/
-/*
-#ifndef (TARGET_HW_TYPE)
-	#error "Please set target hardware type"
-#endif
+//##############################################################
+//  Preprocessor #DEFINES
+//##############################################################
+#define FW_VERSION			"R1.5"	  //version of this application. Update with Any changes made
+#define FW_VER_DATE     "121124"  //Date of fw version update. Update when version changes. 
+//#define DEBUG_PRINTS            //comment out for formal release
+#define OLED_CONNECTED 
+//#define ENABLE_TIMERSCOPE       // If enabled- Can Scope LED output for timer calibration etc
+#define APP_BASE_TIME		    10    // ms - careful adjust this- 
+#define TEN_MS_PER			    1     // multiple of APP_BASE_TIME [ms]
+#define BTN_SCAN_PER		    2     // multiple of APP_BASE_TIME [ms]
+#define SLEEP_TIMEOUT		    5     // Seconds of inactive until low power sleep
+#define BTN_SHORTPRESS_TIME	3     //*APP_BASE_TIME*BTN_SCAN_PER = 60ms
+#define BTN_NORMPRESS_TIME  6     //*APP_BASE_TIME*BTN_SCAN_PER = 120ms
+#define BTN_LONGPRESS_TIME  50    //*APP_BASE_TIME*BTN_SCAN_PER = 1000ms
+#define APP_LVC             3.49  // Lipo Low Voltage Cutoff. Governed by OLED pwred by 3.3LDO
+#define NONE				        0
 
-#if (LDC_HW_TYPE != TARGET_HW_TYPE)
-	#error "Unsupported Hardware!!- Use correct LDC Hardware type"
-#endif
+//##############################################################
+//  I/O PIN ASSIGNMENTS
+//##############################################################
+// Feather M0 Express has PWM on the following pins: A2, A3, A4, 
+// SCK, MOSI, MISO, D0, RX, D1, TX, SDA, SCL, D5, D6, D9, D10, D11, D12, D13, NEOPIXEL. There is NO PWM on: A0, A1, A5.
+// For a true DAC 10bit- USE A0. 
+// These constants won't change. They're used to give names to the pins used:
+//const int analogOutPin = A0;   // Analog input pin that the potentiometer is attached to
+#define MISO          28    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
+#define MOSI          29    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
+#define SCK           30    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
 
-#ifndef (TARGET_HW_VER)
-	#error "Please set target hardware version"
-#endif
+//##############  Application PIN ASSIGMENTS #####################
+#define SER_LED			  8     //NeoPixel
+//#define DRIVE_ISENSEA A1  //Drive Current Ref
+//#define DRIVE_ISENSEB A5  //Drive Current Ref
+#define OLED_EN_PIN   15    //FeatherM0:  A1
 
-#if (LDC_HW_VER != TARGET_HW_VER)
-	#warning "Actual Hardware version does not match target version "
-#endif
+#define DRIVE_A1_PIN	10        //
+#define DRIVE_A2_PIN  11        //
+#define DRIVE_B1_PIN	12        //
+#define DRIVE_B2_PIN  16        //  FeatherM0: A2
+#define DRIVE_SLP_PIN 17        //  FeatherM0: A3
+#define DRIVE_FLT_PIN 18        //  FeatherM0: A4
 
-*/
-// enum dispState_e{
-//   BOOT,
-//   INITSLEEP,
-//   INITWAKE,
-//   LOWBATT,
-//   USERMODE,
-// };
+#define BTN_A_PIN     9           //OLED Feather Pinout, Shared with Vbat Analog
+#define BTN_B_PIN     6           //OLED Feather Pinout
+#define BTN_C_PIN     5           //OLED Feather Pinout
+
+#define BTN_1_PIN		  BTN_A_PIN   //UP
+#define BTN_2_PIN		  BTN_C_PIN   //DOWN
+
+#define APP_LED			  BRD_LED
+
+#define BRD_LED			  13
+/* pin defines SAMD21 E18??*/
+
+/***************UI BUTTON MASKS*************************/
+#define BTN_UP			  BTN_A_PIN
+#define BTN_DWN			  BTN_C_PIN
+//btn masks for case loop
+#define BTN_ALL_MASK	3
+#define BTN_UP_MASK		2
+#define BTN_DWN_MASK	1
+
 
 enum appState_e{
   BOOT,

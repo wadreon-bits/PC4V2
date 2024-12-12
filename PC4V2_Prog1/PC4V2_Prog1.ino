@@ -48,68 +48,7 @@ Arduino makes code writing FAST!!! I hate the IDE- USE AS7 or VScode
 #endif
 //End of Auto generated function prototypes by Atmel Studio
 
-//##############################################################
-//  Preprocessor #DEFINES
-//##############################################################
-#define FW_VERSION			"R1.4"	  //version of this application. Update with Any changes made
-#define FW_VER_DATE     "120724"  //Date of fw version update. Update when version changes. 
-//#define DEBUG_PRINTS            //comment out for formal release
-#define OLED_CONNECTED 
-//#define ENABLE_TIMERSCOPE       // If enabled- Can Scope LED output for timer calibration etc
-#define APP_BASE_TIME		    10    // ms - careful adjust this- 
-#define TEN_MS_PER			    1     // multiple of APP_BASE_TIME [ms]
-#define BTN_SCAN_PER		    2     // multiple of APP_BASE_TIME [ms]
-#define SLEEP_TIMEOUT		    5     // Seconds of inactive until low power sleep
-#define BTN_SHORTPRESS_TIME	3     //*APP_BASE_TIME*BTN_SCAN_PER = 60ms
-#define BTN_NORMPRESS_TIME  6     //*APP_BASE_TIME*BTN_SCAN_PER = 120ms
-#define BTN_LONGPRESS_TIME  50    //*APP_BASE_TIME*BTN_SCAN_PER = 1000ms
-#define APP_LVC             3.49  // Lipo Low Voltage Cutoff. Governed by OLED pwred by 3.3LDO
-#define NONE				        0
 
-//##############################################################
-//  I/O PIN ASSIGNMENTS
-//##############################################################
-// Feather M0 Express has PWM on the following pins: A2, A3, A4, 
-// SCK, MOSI, MISO, D0, RX, D1, TX, SDA, SCL, D5, D6, D9, D10, D11, D12, D13, NEOPIXEL. There is NO PWM on: A0, A1, A5.
-// For a true DAC 10bit- USE A0. 
-// These constants won't change. They're used to give names to the pins used:
-//const int analogOutPin = A0;   // Analog input pin that the potentiometer is attached to
-#define MISO          28    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
-#define MOSI          29    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
-#define SCK           30    //defined for convenience- Silkscreen on feathers do not show DIO# for all pins
-
-//##############  Application PIN ASSIGMENTS #####################
-#define SER_LED			  8     //NeoPixel
-//#define DRIVE_ISENSEA A1  //Drive Current Ref
-//#define DRIVE_ISENSEB A5  //Drive Current Ref
-#define OLED_EN_PIN   15    //FeatherM0:  A1
-
-#define DRIVE_A1_PIN	10        //
-#define DRIVE_A2_PIN  11        //
-#define DRIVE_B1_PIN	12        //
-#define DRIVE_B2_PIN  16        //  FeatherM0: A2
-#define DRIVE_SLP_PIN 17        //  FeatherM0: A3
-#define DRIVE_FLT_PIN 18        //  FeatherM0: A4
-
-#define BTN_A_PIN     9           //OLED Feather Pinout, Shared with Vbat Analog
-#define BTN_B_PIN     6           //OLED Feather Pinout
-#define BTN_C_PIN     5           //OLED Feather Pinout
-
-#define BTN_1_PIN		  BTN_A_PIN   //UP
-#define BTN_2_PIN		  BTN_C_PIN   //DOWN
-
-#define APP_LED			  BRD_LED
-
-#define BRD_LED			  13
-/* pin defines SAMD21 E18??*/
-
-/***************UI BUTTON MASKS*************************/
-#define BTN_UP			  BTN_A_PIN
-#define BTN_DWN			  BTN_C_PIN
-//btn masks for case loop
-#define BTN_ALL_MASK	3
-#define BTN_UP_MASK		2
-#define BTN_DWN_MASK	1
 
 /*MACROS*/  
 #define WIRE Wire 
@@ -147,7 +86,6 @@ volatile signed int aux_pwm       = 0;
 unsigned int led_on               = 0;				// counter to turn off led
 unsigned int sleep_counter        = 0;         //
 int timer_id                      = 0; 
-unsigned int crit_batt_cntdown    = 0; 
 unsigned int bod33_cnt            = 0; 
 
 int temp_32; 
@@ -184,7 +122,7 @@ static void syncGCLK() {
 //void PM_Handler(){
 		//
 //}
-void SYSCTRL_Handler(){
+void SYSCTRL_Handler(){   //BROWN OUT DETECTED 
 	int temp_32;
 
 	SYSCTRL->INTFLAG.bit.BOD33DET = 0x1; // clear flag to re-arm interrupt
@@ -193,8 +131,6 @@ void SYSCTRL_Handler(){
 	//serled.show();
 	REG_SYSCTRL_INTFLAG |= 0x00000400;  //clear the interrupt flag
 	flag_crit_batt = true;
-	crit_batt_cntdown = 150;
-  flag_low_batt = true; 
 }
 
 /*Power Manager interupt support routine - Not being used*/
@@ -493,9 +429,46 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
   return btns_state;
 }//end scan_btns function
 
+
+void manage_uiEvents(){  //change to manage_uiEvents(); 
+  //static enum appState_e app_state_last; 
+  switch(app_state){
+    case USERMODE:
+      usermode_events();
+    break;
+
+    case AUX:
+      aux_events();
+    break;
+
+
+    default:
+    break;
+
+
+  }
+
+}
+
+void aux_events(){
+
+    sleep_counter = 0; //keep awake in aux mode
+
+    if(req_mode>204)  req_mode = 0;
+    if(req_mode<0) req_mode = 0;
+
+    aux_pwm = req_mode * 5; 
+    if(drive_state != aux_pwm){
+      set_drive(1, aux_pwm);
+      set_drive(2, aux_pwm);
+      flag_updateDisp = true; 
+      active_mode = req_mode;  
+    }
+  
+}
 /*Manage Drive and LED - run every mode time slice = 10ms */
 /* Should take time to make this a seperate class- for reuse: All cases same*/
-void manage_modes(){
+void usermode_events(){
 	static int case_cnt = 0;
 	static int period_cnt = 0; 
 	static int mode_indexA = 0;	//generic use motor channelA
@@ -504,6 +477,12 @@ void manage_modes(){
   static unsigned int arraysizeB = 0;
 
 
+  if(req_mode > 10)
+    req_mode = 0;
+  if(req_mode < 0)
+    req_mode = 0;
+
+  if(req_mode != 0) sleep_counter = 0; //keep awake if not idle
 
 
 	if(req_mode!=active_mode){
@@ -515,27 +494,7 @@ void manage_modes(){
     #endif
 	} 
 
-  if(app_state == AUX){
-    if(req_mode>204)  req_mode = 0;
-    if(req_mode<0) req_mode = 0;
-
-    aux_pwm = req_mode * 5; 
-    if(drive_state != aux_pwm){
-      set_drive(1, aux_pwm);
-      set_drive(2, aux_pwm);
-      flag_updateDisp = true; 
-      active_mode = req_mode; 
-    }
-    return;   
-  }
-	else{
-    if(req_mode > 10)
-      req_mode = 0;
-    if(req_mode < 0)
-      req_mode = 0;
-  }
-
-
+//
 	switch(req_mode){
 		case 0:
 			//Idle ready for input or sleep timeout
@@ -557,7 +516,7 @@ void manage_modes(){
 			if(active_mode!=req_mode){//mode_counters should be zero
         set_drive(1, 0);
         set_drive(2, 0);
-				serLed_on(0,0, 20);
+				serLed_on(0,0, 20); //rgb value, 
 				//serLed_off();
 				active_mode = req_mode;
         arraysizeA = arrayLen(driveA_mode1_array);  //check array lengths
@@ -821,20 +780,6 @@ void manage_modes(){
         }
       }   
 			break;
-
-		// case AUX:
-		// 	if(active_mode!=req_mode){//mode_counters should be zero
-		// 		serLed_on(0,0, 20);
-		// 		//serLed_off();
-		// 		active_mode = req_mode;
-    //       (if drive_state != aux_pwm){
-    // //     set_drive(1, aux_pwm);        //set drive in motion using first value in array
-    // //     set_drive(2, aux_pwm);
-    //       }
-
-		// 	}
-  
-		// 	break;
 		
 	} // end of switch
 }
@@ -877,6 +822,8 @@ float percent_pwm;
     break;
 
     case LOWBATT:
+      if(flag_crit_batt) return 0; //do not bother writing to display. 
+      if(!flag_updateDisp) return 0;
       display.clearDisplay();
       display.drawRect(0,0, 40, 12, WHITE); //empty cell
       display.drawRect(40,3,5,6, WHITE); //button    
@@ -884,6 +831,7 @@ float percent_pwm;
       display.setCursor(0,17);
       display.print("LOW BATT!");
       display.display();
+      flag_updateDisp = false; 
     break;
 
     case USERMODE:
@@ -945,7 +893,6 @@ float percent_pwm;
       if(percent_pwm > 100.0) percent_pwm = 100.0; 
       display.print("%: "+String(percent_pwm, 1));
       display.display();
-
     }
     flag_updateDisp = false; 
     break;
@@ -953,6 +900,7 @@ float percent_pwm;
   }
   retval = true;
 #endif
+
 return retval; 
 }
 
@@ -971,16 +919,19 @@ void loop() {
 	  if(!flag_blockSleep){
 		  flag_gotoSleep = false;
 		  flag_crit_batt = false;
-      flag_low_batt = false;  //move to batt_read to verify above LVC?? 
       written_once = false; 
 		  init_sleep();
 		  //NVIC_SystemReset();
 		  LowPower.deepSleep();
 	  }
   }
+ 
+  if(flag_low_batt){
+    flag_low_batt = false; //remove if sleep required to clear?? 
+    app_state = LOWBATT; 
+    flag_updateDisp = true; 
+  }
 
-  //app_timer.update();
-  
   if(flag_flickerLED){
 	  if(led_on == 0){
 			serLed_off(); 
@@ -989,13 +940,8 @@ void loop() {
 		led_on--; 
   }
   
-  
-  if((active_mode != 0) || (led_on>0)){ //Something is active??? Kick sleep counter.  
-	  sleep_counter = 0; 
-  }
-  
 
-  if (flag_scanBtns && !flag_crit_batt) {
+  if (flag_scanBtns) {
     flag_scanBtns = false;
     scan_btns();
   }
@@ -1003,32 +949,19 @@ void loop() {
   if (flag_10ms) {
     flag_10ms = false;
 
-		if(flag_crit_batt){
-			//flag_update_disp = true;
-      if(!written_once)
-			  serLed_on(120, 0, 0); //low batt red 
-
-      written_once = true; 
-      crit_batt_cntdown--;    //beat the sleep clock 
-			if(!crit_batt_cntdown)
-				flag_gotoSleep = true; 
-		}
-    else if(flag_low_batt == true){
-      flag_low_batt = false; 
-      app_state = LOWBATT;
-      manage_disp();
-      flag_crit_batt = true; 
-      crit_batt_cntdown = 200;
-      //warn User-
+    if(flag_crit_batt){               //move to event manager? 
+      flag_crit_batt = false;
+      sleep_counter == (SLEEP_TIMEOUT-2);
+        serLed_on(120, 0, 0); //low batt red 
     }
-		else
-			manage_modes();
+    else
+      manage_uiEvents(); //manage_uiEvents();
+
   }//end of 10ms
 
   if (flag_100ms) {
     flag_100ms = false;
-    if(!flag_crit_batt)
-      manage_disp();
+    manage_disp();
     if(btns_state == 0)
       read_batt();
   }//end of 100ms
@@ -1141,9 +1074,7 @@ void read_batt(void){
 
   avg_batt_volts = temp_avg;
 
-  // if((abs(avg_batt_volts-APP_LVC) > 0.05) && (!flag_crit_batt))
-  //   flag_low_batt = true;
-  if((avg_batt_volts <= APP_LVC) && (!flag_crit_batt))
+  if(avg_batt_volts <= APP_LVC)
     flag_low_batt = true; 
 
   #ifdef DEBUG_PRINTS
