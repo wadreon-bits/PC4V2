@@ -387,7 +387,7 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
         req_mode++; 
       }
       case_cnt++;  //case_cnt is an integer will rollover at 65k- Can play with location to make one-shot or repeated events
-      if(case_cnt >= 20)
+      if(case_cnt >= 10)
         case_cnt = 0; 
     break;
 
@@ -398,7 +398,7 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
         //case_cnt = 0; //reset case_cnt for sustained increment
       }      
       case_cnt++;
-      if(case_cnt >= 20)
+      if(case_cnt >= 10)
         case_cnt = 0; 
     break;
 
@@ -413,7 +413,6 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
           app_state = USERMODE;
           serLed_off();
         }
-
       }
       flag_updateDisp = true; 
       case_cnt++;
@@ -429,7 +428,7 @@ unsigned int scan_btns() { //ENTER FUNCTION CALL PERIOD HERE: 20ms
   return btns_state;
 }//end scan_btns function
 
-
+/*Handles Timer UI Events for USER or AUX modes*/
 void manage_uiEvents(){  //change to manage_uiEvents(); 
   //static enum appState_e app_state_last; 
   switch(app_state){
@@ -441,15 +440,13 @@ void manage_uiEvents(){  //change to manage_uiEvents();
       aux_events();
     break;
 
-
     default:
     break;
+  }//end of switch
+}//end of function
 
 
-  }
-
-}
-
+/*Handles Aux Timer Event UI cmnds*/
 void aux_events(){
 
     sleep_counter = 0; //keep awake in aux mode
@@ -562,7 +559,6 @@ float percent_pwm;
       //CLEAR AND DISABLE DISPLAY 
       display.clearDisplay(); 
       display.display();
-
       display.ssd1306_command(SSD1306_DISPLAYOFF);
     break;
 
@@ -587,9 +583,7 @@ float percent_pwm;
 
     case USERMODE:
       if(flag_updateDisp){
-
         display.clearDisplay();
-
         display.drawRect(0,0, 40, 12, WHITE); //empty cell
         display.drawRect(40,3,5,6, WHITE); //button
         if(avg_batt_volts >= 4.0){    //full batt
@@ -647,15 +641,14 @@ float percent_pwm;
     }
     flag_updateDisp = false; 
     break;
-
   }
   retval = true;
 #endif
 
 return retval; 
-}
+}//end of disp function
 
-/*Function Header*/
+/*MAIN*/
 void loop() {
 
   app_timer.update();
@@ -691,7 +684,6 @@ void loop() {
 		led_on--; 
   }
   
-
   if (flag_scanBtns) {
     flag_scanBtns = false;
     scan_btns();
@@ -707,7 +699,6 @@ void loop() {
     }
     else
       manage_uiEvents(); //manage_uiEvents();
-
   }//end of 10ms
 
   if (flag_100ms) {
@@ -725,7 +716,6 @@ void loop() {
 		else
 			sleep_counter++;
   }//end of 1second
-   
  
 } //END OF MAIN() // ARDUINO LOOP() 
 
