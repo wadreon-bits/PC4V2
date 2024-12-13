@@ -4,6 +4,20 @@ Prototype test platform- Code application and devkit based hardware.
 DC Motor controller with Display UI, Aimed to test small ~4volt ERM motors. 2 motor output channels.
 Capable of providing 10bit waveform on 2 motor drive h-bridge channels at 100Hz update rate. 
 
+Using The Assembled Device:
+1. Charge for ~1hour if discharged -uUSB
+2. Press either button to wake device
+3. Press UP/DWN to select mode#(User setting? Level? Idk)
+4. Set to mode#0 to turn off- will resume sleep in a few seconds.
+5. As shipped-The modes are programmed as follows
+	- #1-3 are constant speed, 50%, 75%, 100%(motors a/b opp directions)
+	- #4-10 are various on/off, and sweeping patterns. Easy to mod. 
+	- Can read mode_arrays.h within the code to get a better idea of the patterns programmed. Easy to mod.
+6. Press and hold both buttons simultaneously for >1sec to enter/leave the direct motor drive mode.
+	- NOTE! Most ERM motors will NOT start spinning until >15-20% power is applied. Mode starts at 0.0%.
+	- It will stay awake in this mode. Press both btns >1sec again to return to user mode.
+7. Fully charged should read approx~ 4.15vdc or more when unplugged. 
+
 The Hardware consists of the following:
 1. Feather M0 Express w/Stacking headers
 2. Feather OLED 128x32 with standard male header
