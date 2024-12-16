@@ -37,8 +37,8 @@
 //##############################################################
 //  Preprocessor #DEFINES
 //##############################################################
-#define FW_VERSION			"R2.1"	  //version of this application. Update with Any changes made
-#define FW_VER_DATE     "121324"  //Date of fw version update. Update when version changes. 
+#define FW_VERSION			"R2.2"	  //version of this application. Update with Any changes made
+#define FW_VER_DATE     "121624"  //Date of fw version update. Update when version changes. 
 //#define DEBUG_PRINTS            //comment out for formal release
 #define OLED_CONNECTED 
 //#define ENABLE_TIMERSCOPE       // If enabled- Can Scope LED output for timer calibration etc

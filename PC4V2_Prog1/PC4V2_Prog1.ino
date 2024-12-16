@@ -512,7 +512,7 @@ void usermode_events(){
 				serLed_on(usermode_leds[offset][0],usermode_leds[offset][1],usermode_leds[offset][2]); //rgb value, 
         
         set_drive(1, ptr_arraysA[offset][0]);        //set drive in motion using first value in array
-        set_drive(1, ptr_arraysB[offset][0]);        //set drive in motion using first value in array
+        set_drive(2, ptr_arraysB[offset][0]);        //set drive in motion using first value in array
         active_mode = req_mode;
 			}
       else{
