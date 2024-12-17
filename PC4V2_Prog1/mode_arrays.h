@@ -27,8 +27,8 @@ Drive and LED Arrays are processed as follows-
 */
 
 //######################### MODE 1 ARRAY ############################################//     Single DC Output Value (0 to +/-1023) = (0-100% Power), negative changes motor dir
-const int driveA_mode1[]  = {510};    //Motor Channel A
-const int driveB_mode1[]  = {510};    //Motor Channel B
+const int driveA_mode1[]  = {900};    //Motor Channel A
+const int driveB_mode1[]  = {900};    //Motor Channel B
 
 //######################### MODE 2 ARRAY ############################################//     Single DC Output Value (-1023 <-> +1023) = (0-100% Power), negative changes motor dir
 const int driveA_mode2[]   = {770};

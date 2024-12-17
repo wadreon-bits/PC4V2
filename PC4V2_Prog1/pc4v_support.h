@@ -1,7 +1,8 @@
 #ifndef pc4v_support_h
 #define pc4v_support_h
 #include <Adafruit_NeoPixel.h>    //Adafruit Repos - Sketch>>Include Library>>Manage Libraries
-#include "Timer.h"                //Belive this is Native? 
+//#include "Timer.h"
+#include "src/Timer-master/Timer.h"
 #include "ArduinoLowPower.h"      //Search Lib Manager
 #include <WString.h>              //Belive this is Native? 
 #include "Arduino.h"              //Native Lib 
@@ -37,7 +38,7 @@
 //##############################################################
 //  Preprocessor #DEFINES
 //##############################################################
-#define FW_VERSION			"R2.2"	  //version of this application. Update with Any changes made
+#define FW_VERSION			"R2.3"	  //version of this application. Update with Any changes made
 #define FW_VER_DATE     "121624"  //Date of fw version update. Update when version changes. 
 //#define DEBUG_PRINTS            //comment out for formal release
 #define OLED_CONNECTED 
