@@ -12,7 +12,7 @@ Repository Directory: (protocontrol_4V2)
 - README.md		- .GIT repo readme doc
 
 Using The Assembled Device:
-1. Charge for ~1hour if discharged -uUSB. Fully charged should read approx~ 4.15vdc or more when device unplugged. 
+1. Charge for approx 1hour if discharged -uUSB. Fully charged should read around 4.15vdc or more when device unplugged. 
 2. Press either button to wake device
 3. Press UP/DWN to select mode#(User setting? Level? Idk)
 4. Set to mode#0 to turn device off- will resume sleep in a few seconds.
