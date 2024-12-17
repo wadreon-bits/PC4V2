@@ -4,13 +4,12 @@ Prototype test platform- Code application and devkit based hardware.
 DC Motor controller with Display UI, Aimed to test small ~4volt ERM motors. 2 motor output channels.
 Capable of providing 10bit waveform on 2 motor drive h-bridge channels at 100Hz update rate. 
 
-Repository Directory:
-	protocontrol_4V2
-		ArrayBuilding_Excel 	- Method to build waveforms with excel. Ask for demo.
-		Control_Enclosure_R1 	- MCADD files for device enclosure
-		PC4V2_Prog1		- Arduino Sketch Folder
-		ProtoCheatSheet.doc	- Quick Device instructions
-		README.md		- .GIT repo readme doc
+Repository Directory: (protocontrol_4V2)
+- ArrayBuilding_Excel 	- Method to build waveforms with excel. Ask for demo.
+- Control_Enclosure_R1 	- MCADD files for device enclosure
+- PC4V2_Prog1		- Arduino Sketch Folder
+- ProtoCheatSheet.doc	- Quick Device instructions
+- README.md		- .GIT repo readme doc
 
 Using The Assembled Device:
 1. Charge for ~1hour if discharged -uUSB. Fully charged should read approx~ 4.15vdc or more when device unplugged. 
