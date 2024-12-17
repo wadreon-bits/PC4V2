@@ -11,6 +11,7 @@ Repository Directory: (protocontrol_4V2)
 - ProtoCheatSheet.doc	- Quick Device instructions
 - README.md		- .GIT repo readme doc
 
+
 Using The Assembled Device:
 1. Charge for approx 1hour if discharged -uUSB. Fully charged should read around 4.15vdc or more when device unplugged. 
 2. Press either button to wake device
@@ -44,18 +45,6 @@ Setting Up Arduino IDE: (Updated after R2.2 - after RyanR first load)
  - Can check in IDE-  File>>Preferences>>Sketchbook Location: 
 7. Tool chain is setup and ready to use. Can edit, compile, and flash devices 
 
-
-The Hardware consists of the following:
-1. Feather M0 Express w/Stacking headers
-2. Feather OLED 128x32 with standard male header
-3. 350mAH lipo - Adafruit- Fits between stacked feather boards. 
-4. DRV8833 TI Drive Breakout
-5. 3d Printed housing - Onshape: Proto_UIcontrol>>Enclosure4V2
-6. See code for pinouts 
-7. (Not Used)BS84 P-Chan Mosfet- OLED Pwr Switch
-8. (Not USed)0402 15-20k ohm resistor (Pull up for pchannel)
-
-
 Programming Device:
 1. Plug into PC USB port
 2. Open Arduino IDE
@@ -66,6 +55,16 @@ Programming Device:
 6. Tools>>Port  - Select the port that now shows (Adafruit Feather M0 Express (SAMD21)).
 7. Sketch>>Upload.  The IDE will begin compiling, then begin flash programming the device. 
 8. Programming should complete with no warnings or errors. 
+
+The Hardware consists of the following:
+1. Feather M0 Express w/Stacking headers
+2. Feather OLED 128x32 with standard male header
+3. 350mAH lipo - Adafruit- Fits between stacked feather boards. 
+4. DRV8833 TI Drive Breakout
+5. 3d Printed housing - Onshape: Proto_UIcontrol>>Enclosure4V2
+6. See code for pinouts 
+7. (Not Used)BS84 P-Chan Mosfet- OLED Pwr Switch
+8. (Not USed)0402 15-20k ohm resistor (Pull up for pchannel)
 
 Firmware Notes:
 1. Firmware application built original in AS7 at LDC- modified to use Arduino framework
